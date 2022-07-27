@@ -1,5 +1,12 @@
 import React, { useState, useRef } from "react";
-import { Animated, Easing, Pressable, TouchableOpacity } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  Easing,
+  Pressable,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
 import styled from "styled-components";
 
 const Container = styled.View`
@@ -15,40 +22,58 @@ const Box = styled.View`
 `;
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 export default function App() {
-  const [up, setUp] = useState(false);
-  const position = useRef(new Animated.ValueXY({ x: 0, y: 300 })).current;
-  const toggleUp = () => setUp((prev) => !prev);
-  const moveUp = () => {
-    Animated.timing(position, {
-      toValue: up ? 300 : -300,
-      useNativeDriver: false,
-      duration: 2000,
-    }).start(toggleUp);
-  };
-  const opacityValue = position.y.interpolate({
-    inputRange: [-300, 0, 300],
-    outputRange: [1, 0, 1],
-  });
-  const rotation = position.y.interpolate({
-    inputRange: [-300, 300],
-    outputRange: ["-360deg", "360deg"],
+  const POSITION = useRef(
+    new Animated.ValueXY({
+      x: -SCREEN_WIDTH / 2 + 100,
+      y: -SCREEN_HEIGHT / 2 + 100,
+    })
+  ).current;
+  const topLeft = Animated.timing(POSITION, {
+    toValue: {
+      x: -SCREEN_WIDTH / 2 + 100,
+      y: -SCREEN_HEIGHT / 2 + 100,
+    },
+    useNativeDriver: true,
   });
 
-  const bgColor = position.y.interpolate({
-    inputRange: [-300, 300],
-    outputRange: ["rgb(255,99,71)", "rgb(71,166,255)"],
+  const bottomLeft = Animated.timing(POSITION, {
+    toValue: {
+      x: -SCREEN_WIDTH / 2 + 100,
+      y: SCREEN_HEIGHT / 2 - 100,
+    },
+    useNativeDriver: true,
   });
+
+  const bottomRight = Animated.timing(POSITION, {
+    toValue: {
+      x: SCREEN_WIDTH / 2 - 100,
+      y: SCREEN_HEIGHT / 2 - 100,
+    },
+    useNativeDriver: true,
+  });
+
+  const topRight = Animated.timing(POSITION, {
+    toValue: {
+      x: SCREEN_WIDTH / 2 - 100,
+      y: -SCREEN_HEIGHT / 2 + 100,
+    },
+    useNativeDriver: true,
+  });
+
+  const moveUp = () => {
+    Animated.loop(
+      Animated.sequence([topLeft, bottomLeft, bottomRight, topRight, topLeft])
+    ).start();
+  };
 
   return (
     <Container>
       <Pressable onPress={moveUp}>
         <AnimatedBox
           style={{
-            backgroundColor: bgColor,
-            opacity: opacityValue,
-            transform: [{ rotateY: rotation }, { translateY: position.y }],
+            transform: [...POSITION.getTranslateTransform()],
           }}
         />
       </Pressable>

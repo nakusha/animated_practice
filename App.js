@@ -2,10 +2,9 @@ import React, { useState, useRef } from "react";
 import {
   Animated,
   Dimensions,
-  Easing,
-  Pressable,
-  TouchableOpacity,
-  useWindowDimensions,
+  PanResponder,
+  GestureResponderEvent,
+  PanResponderGestureState,
 } from "react-native";
 import styled from "styled-components";
 
@@ -26,57 +25,26 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 export default function App() {
   const POSITION = useRef(
     new Animated.ValueXY({
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
+      x: 0,
+      y: 0,
     })
   ).current;
-  const topLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    useNativeDriver: true,
-  });
-
-  const bottomLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: true,
-  });
-
-  const bottomRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: true,
-  });
-
-  const topRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    useNativeDriver: true,
-  });
-
-  const moveUp = () => {
-    Animated.loop(
-      Animated.sequence([topLeft, bottomLeft, bottomRight, topRight, topLeft])
-    ).start();
-  };
-
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, { dx, dy }) => {
+        POSITION.setValue({ x: dx, y: dy });
+      },
+    })
+  ).current;
   return (
     <Container>
-      <Pressable onPress={moveUp}>
-        <AnimatedBox
-          style={{
-            transform: [...POSITION.getTranslateTransform()],
-          }}
-        />
-      </Pressable>
+      <AnimatedBox
+        {...panResponder.panHandlers}
+        style={{
+          transform: [...POSITION.getTranslateTransform()],
+        }}
+      />
     </Container>
   );
 }
